@@ -4,13 +4,11 @@ import logging
 import dotenv
 from client import BotClient
 # from db import GSheetClient
+import db
 
 # set up logger
 logger = logging.getLogger('__main__')
 
-# import env vars from .env file
-dotenv.load_dotenv()
-logging.debug('Env vars have been imported from .env')
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -24,16 +22,20 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
+    # set loggin config
     logging.basicConfig(
         format='{asctime} [{levelname}] {message}',
         style='{',
         level=args.loglevel.upper(),
     )
 
-    client = BotClient()
-    logging.info('Client object created')
+    # import env vars from .env file
+    dotenv.load_dotenv()
+    logger.debug('Env vars have been imported from .env')
 
-    client.run(os.getenv('BOT_TOKEN'))
-    logging.info('Client has started running')
+    # create and start bot client
+    client = BotClient()
+
+    # client.run(os.getenv('BOT_TOKEN'))
 
     pass
