@@ -7,9 +7,10 @@ logger = logging = logging.getLogger('__main__')
 MAX_MSG_PRINT_LEN = 50
 
 class BotClient(discord.Client):
-    def __init__(self):
+    def __init__(self, gsheet_client):
         super().__init__()
         self.prefix = '!'
+        self._gsheet_client = gsheet_client
 
     async def on_ready(self):
         print(f'{self.user} has connected to Discord!')
@@ -42,10 +43,10 @@ class BotClient(discord.Client):
 
         if cmd_exec is not None and callable(cmd_exec):
             logger.info(f'Executing command: "{cmd}" with args {args}')
-            asyncio.create_task(cmd_exec(message, *args)) # we still need the reference to the message object however
+            asyncio.create_task(cmd_exec(message, self._gsheet_client, *args)) # we still need the reference to the message object however
 
         else:
             logger.info(f'Received unknown command: {cmd}')
-            asyncio.create_task(message.channel.send('I haven\'t learned that yet :('))
+            # asyncio.create_task(message.channel.send('I haven\'t learned that yet :('))
 
 

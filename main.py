@@ -3,8 +3,7 @@ import argparse
 import logging
 import dotenv
 from client import BotClient
-# from db import GSheetClient
-import db
+from db import GSheetClient
 
 # set up logger
 logger = logging.getLogger('__main__')
@@ -33,9 +32,12 @@ if __name__ == '__main__':
     dotenv.load_dotenv()
     logger.debug('Env vars have been imported from .env')
 
-    # create and start bot client
-    client = BotClient()
+    # set up gsheet client as db
+    gsheet_client = GSheetClient()
 
-    # client.run(os.getenv('BOT_TOKEN'))
+    # create and start bot client
+    client = BotClient(gsheet_client)
+
+    client.run(os.getenv('BOT_TOKEN'))
 
     pass
