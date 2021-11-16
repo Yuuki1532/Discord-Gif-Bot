@@ -96,20 +96,40 @@ class GSheetClient:
             f'{len(tag_dict)} unique tags')
 
 
-    def cached_get_url(self, *tags, uploader=None, nickname=None):
-        # search and return the best matched gif url from the given parameters
+    def cached_search(self, *tags, uploader=None, nickname=None):
+        # search and return the list of matched id(s) from the given parameters
 
-        tag_dicts = [self._tag_dict[tag] for tag in tags if tag in self._tag_dict]
+        search_dicts = []
 
-        if len(tag_dicts) == 0:
-            return None
 
-        intersection_id_set = set.intersection(*tag_dicts)
+        if len(tags) > 0:
+            tag_dicts = [self._tag_dict[tag] for tag in tags if tag in self._tag_dict]
+            search_dicts.extend(tag_dicts)
 
-        if len(intersection_id_set) == 1: # only one single match
-            id_ = next(iter(intersection_id_set))
-            return self._cache[id_][2] # url
+        if uploader is not None:
+            if uploader in self._uploader_dict:
+                search_dicts.append(self._uploader_dict[uploader])
 
+        if nickname is not None:
+            if nickname in self._nickname_dict:
+                search_dicts.append(self._nickname_dict[nickname])
+
+
+        if len(search_dicts) == 0:
+            return []
+
+
+        intersection_id_set = set.intersection(*search_dicts)
+
+        return list(intersection_id_set)
+
+
+    def cached_getdata(self, index):
+        # return the row of index (in a list)
+        if index in self._cache:
+            return self._cache[index]
+
+        logger.warning('A nonexist index is given to retrieve data from local cache')
         return None
 
 

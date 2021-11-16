@@ -5,7 +5,13 @@ logger = logging = logging.getLogger('__main__')
 
 @utils.no_db
 async def help(message, *args):
-    await message.channel.send('```Usage: !help | !echo TEXT | !show TAGS ... | !add TAGS ... URL```')
+    await message.channel.send(
+        '```Usage:\n'
+        '\t!help |\n'
+        '\t!echo TEXT |\n'
+        '\t!show TAGS ... |\n'
+        '\t!ls [TAGS ...] [uploader=UPLOADER] [nickname=NICKNAME]```'
+        )
 
 @utils.no_db
 async def echo(message, *text):
@@ -26,21 +32,55 @@ async def show(message, db, *tags):
         await message.channel.send('Tag cannot be empty.')
         return
 
-    # query cached db
-    url = db.cached_get_url(*tags)
+    # case insensitive (lower case always)
+    tags = [tag.lower() for tag in tags]
 
-    if url is None:
+    # query cached db
+    ids = db.cached_search(*tags)
+
+    if len(ids) != 1:
         logger.info(f'Cannot find an unique match in command "show"')
         await message.channel.send('Cannot find an unique match.')
         return
 
+    url = db.cached_getdata(ids[0])[2]
     logger.info(f'Send message: "{url}"')
     await message.channel.send(url)
 
     pass
 
-async def ls(message, db):
-    pass
+async def ls(message, db, *args):
+    if len(args) == 0:
+        logger.info(f'Filter is empty in command "ls"')
+        await message.channel.send('Filter cannot be empty. (complete ls is not supported)')
+        return
+
+    tags, uploader, nickname = [], None, None
+
+    for arg in args:
+        if arg.startswith('uploader='):
+            uploader = arg.split('=', maxsplit=1)[-1]
+        elif arg.startswith('nickname='):
+            nickname = arg.split('=', maxsplit=1)[-1]
+        else:
+            tags.append(arg.lower())
+    
+    # query cached db
+    ids = db.cached_search(*tags, uploader=uploader, nickname=nickname)
+
+    if len(ids) == 0:
+        logger.info(f'Cannot find any match in command "ls"')
+        await message.channel.send('Cannot find any match.')
+        return
+
+    output = ''
+
+    for id_ in ids:
+        row = db.cached_getdata(id_)
+        output += f'```{id_} {" ".join(row)}```'
+
+    logger.info(f'{len(ids)} rows found')
+    await message.channel.send(f'{len(ids)} row(s) found.\n{output}')
 
 async def add(message, db, *args):
     if len(args) < 2:

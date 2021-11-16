@@ -15,7 +15,7 @@ if __name__ == '__main__':
         '-log',
         '--loglevel',
         type=str,
-        default='debug',
+        default='info',
         help='Provide logging level. For example, --loglevel debug',
     )
 
