@@ -103,6 +103,13 @@ class GSheetClient:
 
 
         if len(tags) > 0:
+
+            # special case which inputs id directly
+            for tag in tags:
+                if tag in self._cache:
+                    logger.info(f'Matched by id')
+                    return [tag]
+
             tag_dicts = [self._tag_dict[tag] for tag in tags if tag in self._tag_dict]
             search_dicts.extend(tag_dicts)
 

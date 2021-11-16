@@ -9,7 +9,7 @@ async def help(message, *args):
         '```Usage:\n'
         '\t!help |\n'
         '\t!echo TEXT |\n'
-        '\t!show TAGS ... |\n'
+        '\t!show [ID] [TAGS ...] |\n'
         '\t!ls [TAGS ...] [uploader=UPLOADER] [nickname=NICKNAME]```'
         )
 
