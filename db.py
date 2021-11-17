@@ -10,11 +10,13 @@ class GSheetClient:
 
         self._header_lines = 1
 
-        if not os.path.exists('key.json'):
-            logger.error('Currently need key.json file for gsheet auth')
-            raise NotImplemented('Currently need key.json file for gsheet auth')
+        key_file_path = os.getenv('SERVICE_ACCOUNT_KEY_FILE')
 
-        self._creds = service_account.Credentials.from_service_account_file('key.json')
+        if not os.path.exists(key_file_path):
+            logger.error(f'Key file {key_file_path} for gsheet service account auth does not exist')
+            raise Exception(f'Key file {key_file_path} for gsheet service account auth does not exist')
+
+        self._creds = service_account.Credentials.from_service_account_file(key_file_path)
         logger.debug('Credentials from service account file loaded')
 
         self._sheet_id = os.getenv('SHEET_ID')
