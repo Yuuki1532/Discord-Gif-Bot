@@ -2,7 +2,7 @@ import logging
 import asyncio
 import shlex
 import discord
-import action
+import command
 
 logger = logging = logging.getLogger('__main__')
 MAX_MSG_PRINT_LEN = 50
@@ -40,7 +40,7 @@ class BotClient(discord.Client):
         cmd, *args = shlex.split(content, posix=True)
 
         # try to find a function to handle
-        cmd_exec = getattr(action, cmd, None)
+        cmd_exec = getattr(command, cmd, None)
 
         if cmd_exec is not None and callable(cmd_exec):
             logger.info(f'Executing command: "{cmd}" with args {args}')
@@ -51,6 +51,6 @@ class BotClient(discord.Client):
 
             # shortcut
             logger.info(f'Treat as shortcut: !show {cmd} {" ".join(args)}')
-            asyncio.create_task(action.show(message, self._gsheet_client, cmd, *args, suppress_warning=True))
+            asyncio.create_task(command.show(message, self._gsheet_client, cmd, *args, suppress_warning=True))
 
 
