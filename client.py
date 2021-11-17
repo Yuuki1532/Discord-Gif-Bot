@@ -47,6 +47,9 @@ class BotClient(discord.Client):
 
         else:
             logger.info(f'Received unknown command: {cmd}')
-            # asyncio.create_task(message.channel.send('I haven\'t learned that yet :('))
+
+            # shortcut
+            logger.info(f'Treat as shortcut: !show {cmd} {" ".join(args)}')
+            asyncio.create_task(action.show(message, self._gsheet_client, cmd, *args, suppress_warning=True))
 
 

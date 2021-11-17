@@ -31,7 +31,7 @@ class GSheetClient:
     def update_cache(self):
         logger.info('Start updating local cache')
 
-        sheet = self.get("'gif_db'")
+        sheet = self._gsheet_get("'gif_db'")
 
         if sheet is None:
             logger.warning('Retrieved gsheet is empty')
@@ -70,7 +70,7 @@ class GSheetClient:
         tag_dict = {}
 
         for id_, data in self._cache.items():
-            uploader, nickname, url, *tags = data
+            uploader, nickname, content, *tags = data
 
             # uploader
             uploader_set = uploader_dict.setdefault(uploader, set())
@@ -136,17 +136,72 @@ class GSheetClient:
         if index in self._cache:
             return self._cache[index]
 
-        logger.warning('A nonexist index is given to retrieve data from local cache')
+        # logger.warning('A nonexist index is given to retrieve data from local cache')
         return None
 
+    def adddata(self, index, *data):
 
-    def get(self, range):
+        if index in self._cache:
+            logger.warning(f'Attempt to add an exist id to local cache, ignored')
+            return
+
+        # add entry to local cache
+        self._cache[index] = list(data)
+        logger.debug(f'Row added to cache with id: {index}')
+
+        # update lookup table
+        logger.debug(f'Updating lookup table')
+
+        uploader, nickname, content, *tags = data
+
+        # uploader
+        uploader_set = self._uploader_dict.setdefault(uploader, set())
+        uploader_set.add(index)
+
+        # nickname
+        nickname_set = self._nickname_dict.setdefault(nickname, set())
+        nickname_set.add(index)
+
+        # tags
+        for tag in tags:
+            tag_set = self._tag_dict.setdefault(tag, set())
+            tag_set.add(index)
+
+        # send to remote
+        logger.debug(f'Sending to remote')
+        self._gsheet_append(index, *data, search_range="'gif_db'")
+
+        logger.info(f'Row added with id: {index}')
+
+
+    def _gsheet_get(self, range):
         logger.debug('Getting gsheet in range: {range}')
 
         response = self._service.spreadsheets().values().get(spreadsheetId=self._sheet_id, range=range).execute()
         return response.get('values', None)
 
-    def set(self, range, value):
-        pass
+    def _gsheet_append(self, *data, search_range):
+        # append a single new row to gsheet
+        # search range: range of the table, in order to find the row number to append
+
+        logger.debug('Appending a new row to gsheet')
+
+        body = {
+            'majorDimension': 'ROWS',
+            'values': [
+                list(data)
+            ]
+        }
+
+        response = self._service.spreadsheets().values().append(
+            spreadsheetId=self._sheet_id,
+            range=search_range,
+            valueInputOption='RAW',
+            insertDataOption='INSERT_ROWS',
+            body=body,
+        ).execute()
+
+        logger.info('Successfully appended a new row to gsheet')
+        return
 
 

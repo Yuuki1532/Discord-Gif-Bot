@@ -8,9 +8,10 @@ async def help(message, *args):
     await message.channel.send(
         '```Usage:\n'
         '\t!help |\n'
-        '\t!echo TEXT |\n'
+        '\t!echo CONTENT |\n'
         '\t!show [ID] [TAGS ...] |\n'
-        '\t!ls [TAGS ...] [uploader=UPLOADER] [nickname=NICKNAME]```'
+        '\t!ls [TAGS ...] [uploader=UPLOADER] [nickname=NICKNAME] |\n'
+        '\t!add [TAGS ...] CONTENT```'
         )
 
 @utils.no_db
@@ -26,10 +27,11 @@ async def echo(message, *text):
 
 
 
-async def show(message, db, *tags):
+async def show(message, db, *tags, suppress_warning=False):
     if len(tags) == 0:
         logger.info(f'Tag is empty in command "show"')
-        await message.channel.send('Tag cannot be empty.')
+        if not suppress_warning:
+            await message.channel.send('Tag cannot be empty.')
         return
 
     # case insensitive (lower case always)
@@ -40,12 +42,13 @@ async def show(message, db, *tags):
 
     if len(ids) != 1:
         logger.info(f'Cannot find an unique match in command "show"')
-        await message.channel.send('Cannot find an unique match.')
+        if not suppress_warning:
+            await message.channel.send('Cannot find an unique match.')
         return
 
-    url = db.cached_getdata(ids[0])[2]
-    logger.info(f'Send message: "{url}"')
-    await message.channel.send(url)
+    content = db.cached_getdata(ids[0])[2]
+    logger.info(f'Send message: "{content}"')
+    await message.channel.send(content)
 
     pass
 
@@ -84,15 +87,23 @@ async def ls(message, db, *args):
 
 async def add(message, db, *args):
     if len(args) < 2:
-        logger.info(f'Tag and/or url is empty in command "add"')
-        await message.channel.send('At least one tag should be provided along with an url.')
+        logger.info(f'Tag and/or content is empty in command "add"')
+        await message.channel.send('At least one tag should be provided along with the content.')
         return
 
-    tags, url = args[:-1], args[-1]
+    tags, content = args[:-1], args[-1]
 
+    # check duplicate
+    id_ = utils.get_str_hash(content)
 
+    if db.cached_getdata(id_) is not None:
+        logger.info(f'Attempt to add an exist row with id: {id_} in command "add"')
+        await message.channel.send('The given content has already been added to the database.')
+        return
 
-    pass
+    db.adddata(id_, message.author.name, message.author.display_name, content, *tags)
+    await message.channel.send('Success!')
+
 
 async def rm(message):
     pass
