@@ -1,5 +1,6 @@
 import logging
 import asyncio
+import shlex
 import discord
 import action
 
@@ -36,7 +37,7 @@ class BotClient(discord.Client):
         logger.debug(f'Received a valid message, start parsing')
 
         # tokenize
-        cmd, *args = content.split()
+        cmd, *args = shlex.split(content, posix=True)
 
         # try to find a function to handle
         cmd_exec = getattr(action, cmd, None)

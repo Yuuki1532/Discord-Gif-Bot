@@ -31,7 +31,7 @@ class GSheetClient:
     def update_cache(self):
         logger.info('Start updating local cache')
 
-        sheet = self._gsheet_get("'gif_db'")
+        sheet = self._gsheet_get("'content_db'")
 
         if sheet is None:
             logger.warning('Retrieved gsheet is empty')
@@ -169,7 +169,7 @@ class GSheetClient:
 
         # send to remote
         logger.debug(f'Sending to remote')
-        self._gsheet_append(index, *data, search_range="'gif_db'")
+        self._gsheet_append(index, *data, search_range="'content_db'")
 
         logger.info(f'Row added with id: {index}')
 
