@@ -1,5 +1,7 @@
 # A Discord Bot Based on discord.py
 
+Just for fun!
+
 ## Main Features
 - Manage uploaded GIFs by storing their URLs and tags in a google spreadsheet
     - Actually, other contents are also supported, whatever a google spreadsheet cell can save

@@ -1,7 +1,11 @@
 import logging
+import asyncio
 import utils
+import uuid
 
 logger = logging = logging.getLogger('__main__')
+
+cache_update_otp = None
 
 @utils.no_db
 async def help(message, *args):
@@ -108,6 +112,38 @@ async def add(message, db, *args):
 async def rm(message):
     pass
 
+async def request_cache_update(message, db):
+    global cache_update_otp
 
+    async def delete_cache_update_otp(expire_time=20):
+        global cache_update_otp
+        await asyncio.sleep(expire_time)
+        cache_update_otp = None
 
+    cache_update_otp = uuid.uuid4().hex
+    logger.warning(f'Received request for cahce update. OTP: {cache_update_otp}')
+    await message.channel.send('Please provide the OTP showed on the debug console by `confirm_cache_update OTP`')
+
+    # delete otp after it expires
+    asyncio.create_task(delete_cache_update_otp())
+
+async def confirm_cache_update(message, db, otp):
+    global cache_update_otp
+
+    if cache_update_otp is None:
+        logger.warning('OPT not requested or expired for cache update')
+        await message.channel.send('OPT not requested or expired for cache update.')
+        return
+
+    if otp == cache_update_otp:
+        logger.warning(f'Received OTP accepted. Updating local cache')
+        cache_update_otp = None
+        db.update_cache()
+        db.create_lookup_tables()
+    else:
+        logger.warning(f'Received OTP rejected.')
+        await message.channel.send('OPT rejected.')
+        return
+
+    await message.channel.send('Success!')
 
