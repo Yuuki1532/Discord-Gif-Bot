@@ -12,10 +12,9 @@ logger = logging.getLogger('__main__')
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        '-log',
         '--loglevel',
         type=str,
-        default='info',
+        default='debug',
         help='Provide logging level. For example, --loglevel debug',
     )
 
@@ -35,9 +34,9 @@ if __name__ == '__main__':
     # set up gsheet client as db
     gsheet_client = GSheetClient()
 
-    # create and start bot client
+    # create and start bot client with all intents
     client = BotClient(gsheet_client)
 
     client.run(os.getenv('BOT_TOKEN'))
 
-    pass
+

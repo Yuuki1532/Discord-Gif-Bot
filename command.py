@@ -1,11 +1,11 @@
 import logging
 import asyncio
+import re
 import utils
-import uuid
+import discord
 
 logger = logging = logging.getLogger('__main__')
 
-cache_update_otp = None
 
 @utils.no_db
 async def help(message, *args):
@@ -15,7 +15,8 @@ async def help(message, *args):
         '\t!echo CONTENT |\n'
         '\t!show [ID] [TAGS ...] |\n'
         '\t!ls [TAGS ...] [uploader=UPLOADER] [nickname=NICKNAME] |\n'
-        '\t!add [TAGS ...] CONTENT```'
+        '\t!add [TAGS ...] CONTENT |\n'
+        '\t!np [USER_MENTION]```'
         )
 
 @utils.no_db
@@ -83,8 +84,8 @@ async def ls(message, db, *args):
     output = ''
 
     for id_ in ids:
-        row = db.cached_getdata(id_)
-        output += f'```{id_} {" ".join(row)}```'
+        uploader_, nickname_, content, *tags_  = db.cached_getdata(id_)
+        output += f'```id: {id_}\nuploader: {uploader_} ({nickname_})\ntags: {" ".join(tags_)}\ncontent: {content}```'
 
     logger.info(f'{len(ids)} rows found')
     await message.channel.send(f'{len(ids)} row(s) found.\n{output}')
@@ -112,38 +113,52 @@ async def add(message, db, *args):
 async def rm(message):
     pass
 
-async def request_cache_update(message, db):
-    global cache_update_otp
+async def update_cache(message, db):
 
-    async def delete_cache_update_otp(expire_time=20):
-        global cache_update_otp
-        await asyncio.sleep(expire_time)
-        cache_update_otp = None
+    logger.warning(f'Received request for cahce update. Updating local cache')
 
-    cache_update_otp = uuid.uuid4().hex
-    logger.warning(f'Received request for cahce update. OTP: {cache_update_otp}')
-    await message.channel.send('Please provide the OTP showed on the debug console by `confirm_cache_update OTP`')
-
-    # delete otp after it expires
-    asyncio.create_task(delete_cache_update_otp())
-
-async def confirm_cache_update(message, db, otp):
-    global cache_update_otp
-
-    if cache_update_otp is None:
-        logger.warning('OPT not requested or expired for cache update')
-        await message.channel.send('OPT not requested or expired for cache update.')
-        return
-
-    if otp == cache_update_otp:
-        logger.warning(f'Received OTP accepted. Updating local cache')
-        cache_update_otp = None
-        db.update_cache()
-        db.create_lookup_tables()
-    else:
-        logger.warning(f'Received OTP rejected.')
-        await message.channel.send('OPT rejected.')
-        return
+    db.update_cache()
+    db.create_lookup_tables()
 
     await message.channel.send('Success!')
+
+@utils.no_db
+async def np(message, user_mention=None, *args):
+    if len(args) > 0:
+        logger.info(f'More than one argument is given in command "np"')
+        await message.channel.send('At least one user can be mentioned.')
+        return
+
+    if user_mention is not None:
+        # try to get user id by user_mention
+        match = re.match(r'<@!([0-9]+)>', user_mention)
+
+        if match is None:
+            logger.info(f'Cannot parse {user_mention} to an user id')
+            await message.channel.send('Wrong format.')
+            return
+
+        id_ = int(match.group(1))
+
+        logger.debug(f'Trying to get member in guild with id {id_}')
+        user = message.guild.get_member(id_)
+
+        if user is None:
+            logger.info(f'User with id {id_} not found')
+            await message.channel.send('User not found.')
+            return
+
+        logger.debug(f'User {user.display_name} ({user.name}#{user.discriminator}) found with id: {id_}')
+
+    else:
+        user = message.author
+
+
+    for activity in user.activities:
+        if isinstance(activity, discord.Spotify):
+            logger.info(f'{user.display_name} ({user.name}#{user.discriminator}) is now listening to "{activity.title}" by "{activity.artist}" with track_id {activity.track_id} on Spotify')
+            await message.channel.send(f'<@!{user.id}> is now listening to `{activity.title}` by `{activity.artist}` on Spotify\nhttps://open.spotify.com/track/{activity.track_id}')
+            break
+    else:
+        logger.info(f'No Spotify activity for user {user.display_name} ({user.name}#{user.discriminator}) found')
 

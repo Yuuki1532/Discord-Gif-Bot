@@ -41,7 +41,7 @@ SERVICE_ACCOUNT_KEY_FILE = [Key file of google service account]
     - At least one `TAGS` should be provided
     - Use quotes/double quotes to prevent whitespaces in `CONTENT` being parsed as delimiters
 - `ls` [<ins>TAGS ...</ins>] [uploader=<ins>UPLOADER</ins>] [nickname=<ins>NICKNAME</ins>]
-    - List rows in the database with its tags covers `TAGS`, uploader=`UPLOADER`, nickname=`NICKNAME`
+    - List rows in the database with its tags covering `TAGS`, uploader=`UPLOADER`, nickname=`NICKNAME`
     - `UPLOADER` is the user's discord name
     - `NICKNAME` is the user's display name in the channel they added the content
     - All parameters are optional while `ls` without parameter is not provided
@@ -49,5 +49,8 @@ SERVICE_ACCOUNT_KEY_FILE = [Key file of google service account]
     - Show the content filtered by TAGS in the database
     - At least one `TAG` or `ID` should be provided
     - When an `ID` is provided, search directly by `ID` instead of `TAGS`
+- `np` [<ins>USER_MENTION</ins>]
+    - Show the `title`, `artist`, `track_id` of your Spotify activity on Discord
+    - When an user is mentioned as the only argument, show the Spotify activity of that mentioned user on Discord instead
 - <ins>`TAGS ...`</ins>
     - A shortcut command to `show TAGS ...` when none of the commands are matched by the first `TAG` in `TAGS`

@@ -9,7 +9,7 @@ MAX_MSG_PRINT_LEN = 50
 
 class BotClient(discord.Client):
     def __init__(self, gsheet_client):
-        super().__init__()
+        super().__init__(intents=discord.Intents().all()) # create with all intents
         self.prefix = '!'
         self._gsheet_client = gsheet_client
 
@@ -44,7 +44,8 @@ class BotClient(discord.Client):
 
         if cmd_exec is not None and callable(cmd_exec):
             logger.info(f'Executing command: "{cmd}" with args {args}')
-            asyncio.create_task(cmd_exec(message, self._gsheet_client, *args)) # we still need the reference to the message object however
+            # asyncio.create_task(cmd_exec(message, self._gsheet_client, *args)) # we still need the reference to the message object however
+            await cmd_exec(message, self._gsheet_client, *args)
 
         else:
             logger.info(f'Received unknown command: {cmd}')
