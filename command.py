@@ -131,7 +131,7 @@ async def np(message, user_mention=None, *args):
 
     if user_mention is not None:
         # try to get user id by user_mention
-        match = re.match(r'<@!([0-9]+)>', user_mention)
+        match = re.match(r'<@!?([0-9]+)>', user_mention)
 
         if match is None:
             logger.info(f'Cannot parse {user_mention} to an user id')
@@ -157,7 +157,7 @@ async def np(message, user_mention=None, *args):
     for activity in user.activities:
         if isinstance(activity, discord.Spotify):
             logger.info(f'{user.display_name} ({user.name}#{user.discriminator}) is now listening to "{activity.title}" by "{activity.artist}" with track_id {activity.track_id} on Spotify')
-            await message.channel.send(f'<@!{user.id}> is now listening to `{activity.title}` by `{activity.artist}` on Spotify\nhttps://open.spotify.com/track/{activity.track_id}')
+            await message.channel.send(f'<@{user.id}> is now listening to `{activity.title}` by `{activity.artist}` on Spotify\nhttps://open.spotify.com/track/{activity.track_id}')
             break
     else:
         logger.info(f'No Spotify activity for user {user.display_name} ({user.name}#{user.discriminator}) found')
