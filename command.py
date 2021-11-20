@@ -1,6 +1,7 @@
 import logging
 import asyncio
 import re
+import random
 import utils
 import discord
 
@@ -32,7 +33,7 @@ async def echo(message, *text):
 
 
 
-async def show(message, db, *tags, suppress_warning=False):
+async def show(message, db, *tags, suppress_warning=False, must_unique=False):
     if len(tags) == 0:
         logger.info(f'Tag is empty in command "show"')
         if not suppress_warning:
@@ -45,17 +46,24 @@ async def show(message, db, *tags, suppress_warning=False):
     # query cached db
     ids = db.cached_search(*tags)
 
-    if len(ids) != 1:
+    if must_unique and len(ids) != 1:
         logger.info(f'Cannot find an unique match in command "show"')
         if not suppress_warning:
             await message.channel.send('Cannot find an unique match.')
         return
 
-    content = db.cached_getdata(ids[0])[2]
-    logger.info(f'Send message: "{content}"')
-    await message.channel.send(content)
+    idx = 0 if len(ids) == 1 else random.randint(0, len(ids) - 1) # note: randint has both bounds included
 
-    pass
+    content = db.cached_getdata(ids[idx])['content']
+
+    suffix = '' if len(ids) == 1 else ' (*)' # tip for random selection on multiple matches
+
+    if len(ids) > 1:
+        logger.info(f'Randomly select one to reply from {len(ids)} matches')
+    logger.info(f'Send message: "{content}{suffix}"')
+
+    await message.channel.send(f'{content}{suffix}')
+
 
 async def ls(message, db, *args):
     if len(args) == 0:
@@ -84,7 +92,9 @@ async def ls(message, db, *args):
     output = ''
 
     for id_ in ids:
-        uploader_, nickname_, content, *tags_  = db.cached_getdata(id_)
+        values = db.cached_getdata(id_)
+        uploader_, nickname_, content, tags_ = values['uploader'], values['nickname'], values['content'], values['tags']
+
         output += f'```id: {id_}\nuploader: {uploader_} ({nickname_})\ntags: {" ".join(tags_)}\ncontent: {content}```'
 
     logger.info(f'{len(ids)} rows found')

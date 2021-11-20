@@ -6,6 +6,17 @@ from google.oauth2 import service_account
 logger = logging.getLogger('__main__')
 
 class GSheetClient:
+
+    @staticmethod
+    def parse_row(row):
+        # parse a row (list, without its index) to a dict with each key=column_name, value=value_of_column
+        return {
+            'uploader': row[0],
+            'nickname': row[1],
+            'content': row[2],
+            'tags': row[3:],
+        }
+
     def __init__(self):
 
         self._header_lines = 1
@@ -44,6 +55,7 @@ class GSheetClient:
         self._cache = {}
         logger.info(f'Empty cache')
 
+
         # ignore header lines
         sheet = sheet[self._header_lines:]
 
@@ -72,7 +84,8 @@ class GSheetClient:
         tag_dict = {}
 
         for id_, data in self._cache.items():
-            uploader, nickname, content, *tags = data
+            values = self.parse_row(data)
+            uploader, nickname, content, tags = values['uploader'], values['nickname'], values['content'], values['tags']
 
             # uploader
             uploader_set = uploader_dict.setdefault(uploader, set())
@@ -133,10 +146,10 @@ class GSheetClient:
         return list(intersection_id_set)
 
 
-    def cached_getdata(self, index):
-        # return the row of index (in a list)
+    def cached_getdata(self, index) -> dict:
+        # return the parsed row of index
         if index in self._cache:
-            return self._cache[index]
+            return self.parse_row(self._cache[index])
 
         # logger.warning('A nonexist index is given to retrieve data from local cache')
         return None
@@ -154,7 +167,8 @@ class GSheetClient:
         # update lookup table
         logger.debug(f'Updating lookup table')
 
-        uploader, nickname, content, *tags = data
+        values = self.parse_row(data)
+        uploader, nickname, content, tags = values['uploader'], values['nickname'], values['content'], values['tags']
 
         # uploader
         uploader_set = self._uploader_dict.setdefault(uploader, set())
