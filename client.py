@@ -44,14 +44,15 @@ class BotClient(discord.Client):
 
         if cmd_exec is not None and callable(cmd_exec):
             logger.info(f'Executing command: "{cmd}" with args {args}')
-            # asyncio.create_task(cmd_exec(message, self._gsheet_client, *args)) # we still need the reference to the message object however
-            await cmd_exec(message, self._gsheet_client, *args)
+            asyncio.create_task(cmd_exec(message, self._gsheet_client, *args)) # we still need the reference to the message object however
+            # await cmd_exec(message, self._gsheet_client, *args)
 
         else:
             logger.info(f'Received unknown command: {cmd}')
 
             # shortcut
             logger.info(f'Treat as shortcut: !show {cmd} {" ".join(args)}')
+            logger.info(f'Executing command: "show" with args {[cmd, *args]}')
             asyncio.create_task(command.show(message, self._gsheet_client, cmd, *args, suppress_warning=True))
 
 
