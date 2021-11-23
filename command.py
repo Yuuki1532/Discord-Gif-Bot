@@ -46,7 +46,7 @@ async def show(message, db, *tags, suppress_warning=False, must_unique=False):
     # query cached db
     ids = db.cached_search(*tags)
 
-    if must_unique and len(ids) != 1:
+    if len(ids) == 0 or (must_unique and len(ids) > 1):
         logger.info(f'Cannot find an unique match in command "show"')
         if not suppress_warning:
             await message.channel.send('Cannot find an unique match.')
